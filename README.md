@@ -2,20 +2,6 @@
 
 Terraform configuration for spinning up a Wazuh test cluster on OpenStack. Creates an isolated network with five nodes: `indexer`, `server`, `dashboard`, `client`, and `client2`. Only the dashboard node receives a floating IP.
 
-## Architecture
-
-```
-                        ┌─────────────────────────────────────────┐
-  Internet              │  wazuh network (10.0.0.0/24)            │
-      │                 │                                          │
-      │  floating IP    │  10.0.0.60   dashboard  ◄───────────────┼── SSH / HTTPS
-      └─────────────────┤  10.0.0.94   indexer                    │
-                        │  10.0.0.200  server                     │
-                        │  10.0.0.78   client                     │
-                        │  10.0.0.99   client2                    │
-                        └─────────────────────────────────────────┘
-```
-
 ## Requirements
 
 - Terraform >= 1.3
@@ -80,35 +66,3 @@ terraform destroy
 |---|---|
 | `wazuh-internal` | All inbound traffic between cluster nodes |
 | `wazuh-dashboard` | TCP 22 (SSH) and TCP 443 (HTTPS) from `allowed_cidr` |
-
-## Adding nodes
-
-Add an entry to `locals.nodes` in `main.tf` and define a corresponding IP variable in `variables.tf`:
-
-```hcl
-# main.tf
-locals {
-  nodes = {
-    ...
-    client3 = { fixed_ip = var.ip_client3, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
-  }
-}
-```
-
-```hcl
-# variables.tf
-variable "ip_client3" {
-  type    = string
-  default = "10.0.0.100"
-}
-```
-
-## Importing existing resources
-
-If you already created the network or instances manually, you can import them into Terraform state instead of recreating them:
-
-```bash
-terraform import openstack_networking_network_v2.wazuh <network-uuid>
-terraform import openstack_compute_instance_v2.wazuh[\"dashboard\"] <instance-uuid>
-# etc.
-```
