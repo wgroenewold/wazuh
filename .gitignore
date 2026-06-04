@@ -1,0 +1,18 @@
+# Terraform state
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# Vars files with secrets
+terraform.tfvars
+*.auto.tfvars
+
+# Crash logs
+crash.log
+crash.*.log
+
+# OpenStack credentials
+clouds.yaml
+secure.yaml
+*openrc*
