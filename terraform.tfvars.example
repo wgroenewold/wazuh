@@ -1,0 +1,8 @@
+# Pas deze waarden aan naar jouw omgeving
+
+image_id              = "72448fdb-f797-45ef-a192-ddaf58d58f6c"
+key_pair              = "wouter"
+external_network_name = "public"   # naam van je external/provider network
+
+# Optioneel: beperk SSH/HTTPS toegang tot jouw IP
+# allowed_cidr = "145.x.x.x/32"
