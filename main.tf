@@ -153,3 +153,12 @@ resource "openstack_networking_floatingip_associate_v2" "dashboard" {
   floating_ip = openstack_networking_floatingip_v2.dashboard.address
   port_id     = openstack_networking_port_v2.wazuh["dashboard"].id
 }
+
+resource "openstack_networking_floatingip_v2" "salt_master" {
+  pool = var.external_network_name
+}
+
+resource "openstack_networking_floatingip_associate_v2" "salt_master" {
+  floating_ip = openstack_networking_floatingip_v2.salt_master.address
+  port_id     = openstack_networking_port_v2.wazuh["salt-master"].id
+}

@@ -3,6 +3,11 @@ output "dashboard_floating_ip" {
   value       = openstack_networking_floatingip_v2.dashboard.address
 }
 
+output "salt_master_floating_ip" {
+  description = "Public IP of the Salt master node"
+  value       = openstack_networking_floatingip_v2.salt_master.address
+}
+
 output "internal_ips" {
   description = "Internal IP addresses of all nodes"
   value = {
