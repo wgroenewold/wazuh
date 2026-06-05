@@ -13,14 +13,20 @@ write_files:
   - path: /etc/hosts
     content: |
       127.0.0.1 localhost
-      %{ for name, ip in node_ips ~}
+%{ for name, ip in node_ips ~}
       ${ip} ${name}.${internal_domain} ${name}
-      %{ endfor ~}
+%{ endfor ~}
+%{ for minion_id, pub_key in minion_pub_keys ~}
+  - path: /etc/salt/pki/master/minions/${minion_id}
+    content: |
+      ${pub_key}
+    permissions: '0400'
+%{ endfor ~}
 
 runcmd:
   - curl -fsSL -o /tmp/bootstrap-salt.sh https://github.com/saltstack/salt-bootstrap/releases/latest/download/bootstrap-salt.sh
   - sh /tmp/bootstrap-salt.sh -M stable
-  - mkdir -p /srv/salt /srv/pillar /etc/salt/master.d /etc/salt/pki/master/minions
+  - mkdir -p /srv/salt /srv/pillar /etc/salt/master.d
   - |
     cat > /etc/salt/master.d/wazuh.conf << 'SALTEOF'
     file_roots:
@@ -30,11 +36,6 @@ runcmd:
       base:
         - /srv/pillar
     SALTEOF
-%{ for minion_id, pub_key in minion_pub_keys ~}
-  - |
-    cat > /etc/salt/pki/master/minions/${minion_id} << 'KEYEOF'
-    ${pub_key}KEYEOF
-%{ endfor ~}
   - git clone ${repository} /tmp/wazuh-repo
   - cp -r /tmp/wazuh-repo/salt/srv/* /srv/salt/
   - cp -r /tmp/wazuh-repo/salt/pillar/* /srv/pillar/

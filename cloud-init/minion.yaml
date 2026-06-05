@@ -13,21 +13,22 @@ write_files:
   - path: /etc/hosts
     content: |
       127.0.0.1 localhost
-      %{ for name, ip in node_ips ~}
+%{ for name, ip in node_ips ~}
       ${ip} ${name}.${internal_domain} ${name}
-      %{ endfor ~}
+%{ endfor ~}
+  - path: /etc/salt/pki/minion/minion.pem
+    content: |
+      ${minion_priv_key}
+    permissions: '0400'
+  - path: /etc/salt/pki/minion/minion.pub
+    content: |
+      ${minion_pub_key}
+    permissions: '0644'
 
 runcmd:
   - curl -fsSL -o /tmp/bootstrap-salt.sh https://github.com/saltstack/salt-bootstrap/releases/latest/download/bootstrap-salt.sh
   - sh /tmp/bootstrap-salt.sh stable
-  - mkdir -p /etc/salt/minion.d /etc/salt/pki/minion
-  - |
-    cat > /etc/salt/pki/minion/minion.pem << 'KEYEOF'
-    ${minion_priv_key}KEYEOF
-  - |
-    cat > /etc/salt/pki/minion/minion.pub << 'KEYEOF'
-    ${minion_pub_key}KEYEOF
-  - chmod 400 /etc/salt/pki/minion/minion.pem
+  - mkdir -p /etc/salt/minion.d
   - |
     cat > /etc/salt/minion.d/wazuh.conf << 'SALTEOF'
     master: ${master_ip}
