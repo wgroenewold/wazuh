@@ -1,51 +1,50 @@
 variable "network_name" {
-  description = "Naam van het interne Wazuh netwerk"
+  description = "Internal Wazuh network name"
   type        = string
   default     = "wazuh"
 }
 
 variable "subnet_cidr" {
-  description = "CIDR van het interne subnet"
+  description = "CIDR of internal subnet"
   type        = string
   default     = "10.0.0.0/24"
 }
 
 variable "external_network_name" {
-  description = "Naam van het externe netwerk (voor floating IPs en router)"
+  description = "External network name"
   type        = string
-  default     = "public"
+  default     = "external"
 }
 
 variable "dns_nameservers" {
-  description = "DNS servers voor het subnet"
+  description = "DNS servers for the subnet"
   type        = list(string)
   default     = ["8.8.8.8", "8.8.4.4"]
 }
 
 variable "allowed_cidr" {
-  description = "CIDR die SSH/HTTPS mag benaderen op de dashboard node"
+  description = "CIDR that can access dashboard"
   type        = string
   default     = "0.0.0.0/0"
 }
 
 variable "flavor_name" {
-  description = "OpenStack flavor voor alle nodes"
+  description = "OpenStack flavor for all the nodes"
   type        = string
   default     = "hpc.v1.vm.8-16-160"
 }
 
 variable "image_id" {
-  description = "Image UUID (zelfde voor alle nodes)"
+  description = "Image name"
   type        = string
-  # 72448fdb-f797-45ef-a192-ddaf58d58f6c
 }
 
 variable "key_pair" {
-  description = "Naam van het SSH keypair in OpenStack"
+  description = "SSH keypair name"
   type        = string
 }
 
-# Vaste IP-adressen per node (passend in subnet_cidr)
+# Static IP
 variable "ip_indexer" {
   type    = string
   default = "10.0.0.94"
