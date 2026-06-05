@@ -82,13 +82,17 @@ resource "openstack_networking_secgroup_rule_v2" "ssh" {
 
 locals {
   nodes = {
-    indexer   = { fixed_ip = var.ip_indexer, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
-    server    = { fixed_ip = var.ip_server, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
-    dashboard = { fixed_ip = var.ip_dashboard, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id, openstack_networking_secgroup_v2.wazuh_dashboard.id] }
-    client    = { fixed_ip = var.ip_client, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
-    client2   = { fixed_ip = var.ip_client2, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
-
+    indexer     = { fixed_ip = var.ip_indexer, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
+    server      = { fixed_ip = var.ip_server, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
+    dashboard   = { fixed_ip = var.ip_dashboard, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id, openstack_networking_secgroup_v2.wazuh_dashboard.id] }
+    client      = { fixed_ip = var.ip_client, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
+    client2     = { fixed_ip = var.ip_client2, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
     salt-master = { fixed_ip = var.ip_salt_master, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
+  }
+
+  # Stripped-down map for use in templatefile() — only strings, no objects
+  node_ips = {
+    for name, node in local.nodes : name => node.fixed_ip
   }
 }
 
@@ -110,6 +114,16 @@ resource "openstack_compute_instance_v2" "wazuh" {
   flavor_id = data.openstack_compute_flavor_v2.wazuh.id
   image_id  = data.openstack_images_image_v2.wazuh.id
   key_pair  = var.key_pair
+
+  user_data = each.key == "salt-master" ? templatefile("${path.module}/cloud-init/master.yaml", {
+    node_ips        = local.node_ips
+    internal_domain = var.internal_domain
+    }) : templatefile("${path.module}/cloud-init/minion.yaml", {
+    master_ip       = var.ip_salt_master
+    node_name       = each.key
+    node_ips        = local.node_ips
+    internal_domain = var.internal_domain
+  })
 
   network {
     port = openstack_networking_port_v2.wazuh[each.key].id

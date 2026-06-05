@@ -75,3 +75,9 @@ variable "ip_salt_master" {
   type    = string
   default = "10.0.0.10"
 }
+
+variable "internal_domain" {
+  description = "Internal domain used for Salt autosign (e.g. wazuh.local)"
+  type        = string
+  default     = "wazuh.local"
+}
