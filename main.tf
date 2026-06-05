@@ -86,11 +86,11 @@ resource "openstack_networking_secgroup_rule_v2" "ssh" {
 
 locals {
   nodes = {
-    indexer     = { fixed_ip = var.ip_indexer,     secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
-    server      = { fixed_ip = var.ip_server,      secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
-    dashboard   = { fixed_ip = var.ip_dashboard,   secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id, openstack_networking_secgroup_v2.wazuh_external.id] }
-    client      = { fixed_ip = var.ip_client,      secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
-    client2     = { fixed_ip = var.ip_client2,     secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
+    indexer     = { fixed_ip = var.ip_indexer, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
+    server      = { fixed_ip = var.ip_server, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
+    dashboard   = { fixed_ip = var.ip_dashboard, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id, openstack_networking_secgroup_v2.wazuh_external.id] }
+    client      = { fixed_ip = var.ip_client, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
+    client2     = { fixed_ip = var.ip_client2, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
     salt-master = { fixed_ip = var.ip_salt_master, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id, openstack_networking_secgroup_v2.wazuh_external.id] }
   }
 
@@ -137,15 +137,15 @@ resource "openstack_compute_instance_v2" "wazuh" {
     repository      = var.repository
     minion_pub_keys = {
       for name, key in tls_private_key.minion :
-      "${name}.${var.internal_domain}" => key.public_key_openssh
+      "${name}.${var.internal_domain}" => indent(6, key.public_key_openssh)
     }
-  }) : templatefile("${path.module}/cloud-init/minion.yaml", {
+    }) : templatefile("${path.module}/cloud-init/minion.yaml", {
     master_ip       = var.ip_salt_master
     node_name       = each.key
     node_ips        = local.node_ips
     internal_domain = var.internal_domain
-    minion_priv_key = tls_private_key.minion[each.key].private_key_pem
-    minion_pub_key  = tls_private_key.minion[each.key].public_key_openssh
+    minion_priv_key = indent(6, tls_private_key.minion[each.key].private_key_pem)
+    minion_pub_key  = indent(6, tls_private_key.minion[each.key].public_key_openssh)
   })
 
   network {
