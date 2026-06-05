@@ -70,3 +70,8 @@ variable "ip_client2" {
   type    = string
   default = "10.0.0.99"
 }
+
+variable "ip_salt_master" {
+  type    = string
+  default = "10.0.0.10"
+}

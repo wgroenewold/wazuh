@@ -87,6 +87,8 @@ locals {
     dashboard = { fixed_ip = var.ip_dashboard, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id, openstack_networking_secgroup_v2.wazuh_dashboard.id] }
     client    = { fixed_ip = var.ip_client, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
     client2   = { fixed_ip = var.ip_client2, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
+
+    salt-master = { fixed_ip = var.ip_salt_master, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
   }
 }
 
