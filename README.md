@@ -8,6 +8,13 @@ Terraform configuration for spinning up a Wazuh test cluster on OpenStack. Creat
 - OpenStack credentials via `clouds.yaml` or a sourced `openrc` file
 - An existing keypair in OpenStack
 
+## Install
+```bash
+uv venv openstack-venv
+source openstack-venv/bin/activate
+uv pip install -r requirements.txt
+```
+
 ## Usage
 
 ### 1. Configure
