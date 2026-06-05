@@ -34,9 +34,10 @@ variable "flavor_name" {
   default     = "hpc.v1.vm.8-16-160"
 }
 
-variable "image_id" {
-  description = "Image name"
+variable "image_name" {
+  description = "Name of the image to use for all nodes"
   type        = string
+  default     = "ubuntu-24.04-noble"
 }
 
 variable "key_pair" {

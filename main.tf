@@ -82,11 +82,11 @@ resource "openstack_networking_secgroup_rule_v2" "ssh" {
 
 locals {
   nodes = {
-    indexer   = { fixed_ip = var.ip_indexer,   secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
-    server    = { fixed_ip = var.ip_server,    secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
+    indexer   = { fixed_ip = var.ip_indexer, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
+    server    = { fixed_ip = var.ip_server, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
     dashboard = { fixed_ip = var.ip_dashboard, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id, openstack_networking_secgroup_v2.wazuh_dashboard.id] }
-    client    = { fixed_ip = var.ip_client,    secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
-    client2   = { fixed_ip = var.ip_client2,   secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
+    client    = { fixed_ip = var.ip_client, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
+    client2   = { fixed_ip = var.ip_client2, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
   }
 }
 
@@ -106,7 +106,7 @@ resource "openstack_compute_instance_v2" "wazuh" {
   for_each  = local.nodes
   name      = each.key
   flavor_id = data.openstack_compute_flavor_v2.wazuh.id
-  image_id  = var.image_id
+  image_id  = data.openstack_images_image_v2.wazuh.id
   key_pair  = var.key_pair
 
   network {
@@ -120,6 +120,11 @@ resource "openstack_compute_instance_v2" "wazuh" {
 
 data "openstack_compute_flavor_v2" "wazuh" {
   name = var.flavor_name
+}
+
+data "openstack_images_image_v2" "wazuh" {
+  name        = var.image_name
+  most_recent = true
 }
 
 # ── Floating IP (dashboard only) ─────────────────────────────────────────────
