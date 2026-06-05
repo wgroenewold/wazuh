@@ -1,7 +1,6 @@
 #cloud-config
 
-hostname: ${node_name}
-fqdn: ${node_name}.${internal_domain}
+hostname: salt-master
 
 package_update: true
 package_upgrade: false
@@ -10,10 +9,21 @@ packages:
   - curl
 
 write_files:
-  - path: /etc/salt/minion.d/wazuh.conf
+  - path: /etc/salt/master.d/wazuh.conf
     content: |
-      master: ${master_ip}
-      id: ${node_name}.${internal_domain}
+      autosign_grains_dir: /etc/salt/autosign_grains
+
+      file_roots:
+        base:
+          - /srv/salt
+
+      pillar_roots:
+        base:
+          - /srv/pillar
+
+  - path: /etc/salt/autosign_grains/fqdn
+    content: |
+      *.${internal_domain}
 
   - path: /etc/hosts
     content: |
@@ -24,6 +34,7 @@ write_files:
 
 runcmd:
   - curl -fsSL -o /tmp/bootstrap-salt.sh https://bootstrap.saltproject.io
-  - sh /tmp/bootstrap-salt.sh stable
-  - systemctl enable salt-minion
-  - systemctl restart salt-minion
+  - sh /tmp/bootstrap-salt.sh -M stable
+  - mkdir -p /srv/salt /srv/pillar
+  - systemctl enable salt-master salt-minion
+  - systemctl restart salt-master salt-minion

@@ -18,8 +18,8 @@ write_files:
   - path: /etc/hosts
     content: |
       127.0.0.1 localhost
-      %{ for name, node in nodes ~}
-      ${node.fixed_ip} ${name}.${internal_domain} ${name}
+      %{ for name, ip in node_ips ~}
+      ${ip} ${name}.${internal_domain} ${name}
       %{ endfor ~}
 
 runcmd:
