@@ -137,7 +137,7 @@ resource "openstack_compute_instance_v2" "wazuh" {
     repository      = var.repository
     minion_pub_keys = {
       for name, key in tls_private_key.minion :
-      "${name}.${var.internal_domain}" => indent(6, key.public_key_openssh)
+      "${name}.${var.internal_domain}" => indent(6, key.public_key_pem)
     }
     }) : templatefile("${path.module}/cloud-init/minion.yaml", {
     master_ip       = var.ip_salt_master
@@ -145,7 +145,7 @@ resource "openstack_compute_instance_v2" "wazuh" {
     node_ips        = local.node_ips
     internal_domain = var.internal_domain
     minion_priv_key = indent(6, tls_private_key.minion[each.key].private_key_pem)
-    minion_pub_key  = indent(6, tls_private_key.minion[each.key].public_key_openssh)
+    minion_pub_key  = indent(6, tls_private_key.minion[each.key].public_key_pem)
   })
 
   network {
