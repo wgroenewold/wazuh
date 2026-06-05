@@ -118,6 +118,7 @@ resource "openstack_compute_instance_v2" "wazuh" {
   user_data = each.key == "salt-master" ? templatefile("${path.module}/cloud-init/master.yaml", {
     node_ips        = local.node_ips
     internal_domain = var.internal_domain
+    repository      = var.repository
     }) : templatefile("${path.module}/cloud-init/minion.yaml", {
     master_ip       = var.ip_salt_master
     node_name       = each.key
