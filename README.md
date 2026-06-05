@@ -10,6 +10,7 @@ Terraform configuration for spinning up a Wazuh test cluster on OpenStack. Creat
 
 ## Install
 ```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
 uv venv openstack-venv
 source openstack-venv/bin/activate
 uv pip install -r requirements.txt
