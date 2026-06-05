@@ -81,3 +81,9 @@ variable "internal_domain" {
   type        = string
   default     = "wazuh.local"
 }
+
+variable "repository" {
+  description = "Wazuh configuration repository"
+  type        = string
+  default     = "https://github.com/wgroenewold/wazuh.git"
+}

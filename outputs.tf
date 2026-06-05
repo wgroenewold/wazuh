@@ -15,3 +15,8 @@ output "internal_ips" {
     name => openstack_networking_port_v2.wazuh[name].all_fixed_ips[0]
   }
 }
+
+output "repository" {
+  description = "Git repository URL containing the Salt states"
+  value       = var.repository
+}

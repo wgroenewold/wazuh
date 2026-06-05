@@ -1,0 +1,24 @@
+# .github/workflows/deploy-salt.yml
+name: Deploy Salt states
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "salt/**"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to salt-master
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SALT_MASTER_IP }}
+          username: ubuntu
+          key: ${{ secrets.SALT_MASTER_SSH_KEY }}
+          script: |
+            cd /tmp && git clone ${{ secrets.REPOSITORY }} wazuh-repo 2>/dev/null || (cd /tmp/wazuh-repo && git pull)
+            cp -r /tmp/wazuh-repo/salt/srv/* /srv/salt/
+            cp -r /tmp/wazuh-repo/salt/pillar/* /srv/pillar/

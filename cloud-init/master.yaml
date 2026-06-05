@@ -7,6 +7,7 @@ package_upgrade: false
 
 packages:
   - curl
+  - git
 
 write_files:
   - path: /etc/salt/master.d/wazuh.conf
@@ -35,6 +36,9 @@ write_files:
 runcmd:
   - curl -fsSL -o /tmp/bootstrap-salt.sh https://bootstrap.saltproject.io
   - sh /tmp/bootstrap-salt.sh -M stable
-  - mkdir -p /srv/salt /srv/pillar
+  - git clone ${repository} /tmp/wazuh-repo
+  - cp -r /tmp/wazuh-repo/salt/srv/* /srv/salt/
+  - cp -r /tmp/wazuh-repo/salt/pillar/* /srv/pillar/
+  - rm -rf /tmp/wazuh-repo
   - systemctl enable salt-master salt-minion
   - systemctl restart salt-master salt-minion
