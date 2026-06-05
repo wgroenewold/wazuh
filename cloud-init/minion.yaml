@@ -10,11 +10,6 @@ packages:
   - curl
 
 write_files:
-  - path: /etc/salt/minion.d/wazuh.conf
-    content: |
-      master: ${master_ip}
-      id: ${node_name}.${internal_domain}
-
   - path: /etc/hosts
     content: |
       127.0.0.1 localhost
@@ -23,7 +18,10 @@ write_files:
       %{ endfor ~}
 
 runcmd:
-  - curl -fsSL -o /tmp/bootstrap-salt.sh https://bootstrap.saltproject.io
+  - curl -fsSL -o /tmp/bootstrap-salt.sh https://github.com/saltstack/salt-bootstrap/releases/latest/download/bootstrap-salt.sh
   - sh /tmp/bootstrap-salt.sh stable
+  - mkdir -p /etc/salt/minion.d
+  - echo "master: ${master_ip}" > /etc/salt/minion.d/wazuh.conf
+  - echo "id: ${node_name}.${internal_domain}" >> /etc/salt/minion.d/wazuh.conf
   - systemctl enable salt-minion
   - systemctl restart salt-minion

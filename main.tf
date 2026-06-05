@@ -53,9 +53,9 @@ resource "openstack_networking_secgroup_rule_v2" "internal_ingress" {
   security_group_id = openstack_networking_secgroup_v2.wazuh_internal.id
 }
 
-resource "openstack_networking_secgroup_v2" "wazuh_dashboard" {
-  name        = "wazuh-dashboard"
-  description = "External access to Wazuh dashboard"
+resource "openstack_networking_secgroup_v2" "wazuh_external" {
+  name        = "wazuh-external"
+  description = "External access to Wazuh cluster"
 }
 
 resource "openstack_networking_secgroup_rule_v2" "https" {
@@ -65,7 +65,7 @@ resource "openstack_networking_secgroup_rule_v2" "https" {
   port_range_min    = 443
   port_range_max    = 443
   remote_ip_prefix  = var.allowed_cidr
-  security_group_id = openstack_networking_secgroup_v2.wazuh_dashboard.id
+  security_group_id = openstack_networking_secgroup_v2.wazuh_external.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "ssh" {
@@ -75,7 +75,7 @@ resource "openstack_networking_secgroup_rule_v2" "ssh" {
   port_range_min    = 22
   port_range_max    = 22
   remote_ip_prefix  = var.allowed_cidr
-  security_group_id = openstack_networking_secgroup_v2.wazuh_dashboard.id
+  security_group_id = openstack_networking_secgroup_v2.wazuh_external.id
 }
 
 # ── Instances ─────────────────────────────────────────────────────────────────
@@ -84,10 +84,10 @@ locals {
   nodes = {
     indexer     = { fixed_ip = var.ip_indexer, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
     server      = { fixed_ip = var.ip_server, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
-    dashboard   = { fixed_ip = var.ip_dashboard, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id, openstack_networking_secgroup_v2.wazuh_dashboard.id] }
+    dashboard   = { fixed_ip = var.ip_dashboard, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id, openstack_networking_secgroup_v2.wazuh_external.id] }
     client      = { fixed_ip = var.ip_client, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
     client2     = { fixed_ip = var.ip_client2, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
-    salt-master = { fixed_ip = var.ip_salt_master, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
+    salt-master = { fixed_ip = var.ip_salt_master, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id, openstack_networking_secgroup_v2.wazuh_external.id] }
   }
 
   # Stripped-down map for use in templatefile() — only strings, no objects

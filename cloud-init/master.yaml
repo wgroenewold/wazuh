@@ -10,22 +10,6 @@ packages:
   - git
 
 write_files:
-  - path: /etc/salt/master.d/wazuh.conf
-    content: |
-      autosign_grains_dir: /etc/salt/autosign_grains
-
-      file_roots:
-        base:
-          - /srv/salt
-
-      pillar_roots:
-        base:
-          - /srv/pillar
-
-  - path: /etc/salt/autosign_grains/fqdn
-    content: |
-      *.${internal_domain}
-
   - path: /etc/hosts
     content: |
       127.0.0.1 localhost
@@ -34,8 +18,20 @@ write_files:
       %{ endfor ~}
 
 runcmd:
-  - curl -fsSL -o /tmp/bootstrap-salt.sh https://bootstrap.saltproject.io
+  - curl -fsSL -o /tmp/bootstrap-salt.sh https://github.com/saltstack/salt-bootstrap/releases/latest/download/bootstrap-salt.sh
   - sh /tmp/bootstrap-salt.sh -M stable
+  - mkdir -p /srv/salt /srv/pillar /etc/salt/master.d /etc/salt/autosign_grains
+  - |
+    cat > /etc/salt/master.d/wazuh.conf << 'SALTEOF'
+    autosign_grains_dir: /etc/salt/autosign_grains
+    file_roots:
+      base:
+        - /srv/salt
+    pillar_roots:
+      base:
+        - /srv/pillar
+    SALTEOF
+  - echo '*.${internal_domain}' > /etc/salt/autosign_grains/fqdn
   - git clone ${repository} /tmp/wazuh-repo
   - cp -r /tmp/wazuh-repo/salt/srv/* /srv/salt/
   - cp -r /tmp/wazuh-repo/salt/pillar/* /srv/pillar/
