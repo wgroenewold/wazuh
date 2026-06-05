@@ -20,10 +20,9 @@ write_files:
 runcmd:
   - curl -fsSL -o /tmp/bootstrap-salt.sh https://github.com/saltstack/salt-bootstrap/releases/latest/download/bootstrap-salt.sh
   - sh /tmp/bootstrap-salt.sh -M stable
-  - mkdir -p /srv/salt /srv/pillar /etc/salt/master.d /etc/salt/autosign_grains
+  - mkdir -p /srv/salt /srv/pillar /etc/salt/master.d /etc/salt/pki/master/minions
   - |
     cat > /etc/salt/master.d/wazuh.conf << 'SALTEOF'
-    autosign_grains_dir: /etc/salt/autosign_grains
     file_roots:
       base:
         - /srv/salt
@@ -31,7 +30,11 @@ runcmd:
       base:
         - /srv/pillar
     SALTEOF
-  - echo '*.${internal_domain}' > /etc/salt/autosign_grains/fqdn
+%{ for minion_id, pub_key in minion_pub_keys ~}
+  - |
+    cat > /etc/salt/pki/master/minions/${minion_id} << 'KEYEOF'
+    ${pub_key}KEYEOF
+%{ endfor ~}
   - git clone ${repository} /tmp/wazuh-repo
   - cp -r /tmp/wazuh-repo/salt/srv/* /srv/salt/
   - cp -r /tmp/wazuh-repo/salt/pillar/* /srv/pillar/

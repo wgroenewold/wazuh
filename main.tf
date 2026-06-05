@@ -4,6 +4,10 @@ terraform {
       source  = "terraform-provider-openstack/openstack"
       version = "~> 2.0"
     }
+    tls = {
+      source  = "hashicorp/tls"
+      version = "~> 4.0"
+    }
   }
 }
 
@@ -82,11 +86,11 @@ resource "openstack_networking_secgroup_rule_v2" "ssh" {
 
 locals {
   nodes = {
-    indexer     = { fixed_ip = var.ip_indexer, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
-    server      = { fixed_ip = var.ip_server, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
-    dashboard   = { fixed_ip = var.ip_dashboard, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id, openstack_networking_secgroup_v2.wazuh_external.id] }
-    client      = { fixed_ip = var.ip_client, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
-    client2     = { fixed_ip = var.ip_client2, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
+    indexer     = { fixed_ip = var.ip_indexer,     secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
+    server      = { fixed_ip = var.ip_server,      secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
+    dashboard   = { fixed_ip = var.ip_dashboard,   secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id, openstack_networking_secgroup_v2.wazuh_external.id] }
+    client      = { fixed_ip = var.ip_client,      secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
+    client2     = { fixed_ip = var.ip_client2,     secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
     salt-master = { fixed_ip = var.ip_salt_master, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id, openstack_networking_secgroup_v2.wazuh_external.id] }
   }
 
@@ -94,6 +98,18 @@ locals {
   node_ips = {
     for name, node in local.nodes : name => node.fixed_ip
   }
+
+  # All nodes except the salt-master get a minion keypair
+  minion_nodes = {
+    for name, node in local.nodes : name => node
+    if name != "salt-master"
+  }
+}
+
+resource "tls_private_key" "minion" {
+  for_each  = local.minion_nodes
+  algorithm = "RSA"
+  rsa_bits  = 2048
 }
 
 resource "openstack_networking_port_v2" "wazuh" {
@@ -119,11 +135,17 @@ resource "openstack_compute_instance_v2" "wazuh" {
     node_ips        = local.node_ips
     internal_domain = var.internal_domain
     repository      = var.repository
-    }) : templatefile("${path.module}/cloud-init/minion.yaml", {
+    minion_pub_keys = {
+      for name, key in tls_private_key.minion :
+      "${name}.${var.internal_domain}" => key.public_key_openssh
+    }
+  }) : templatefile("${path.module}/cloud-init/minion.yaml", {
     master_ip       = var.ip_salt_master
     node_name       = each.key
     node_ips        = local.node_ips
     internal_domain = var.internal_domain
+    minion_priv_key = tls_private_key.minion[each.key].private_key_pem
+    minion_pub_key  = tls_private_key.minion[each.key].public_key_openssh
   })
 
   network {
@@ -144,7 +166,7 @@ data "openstack_images_image_v2" "wazuh" {
   most_recent = true
 }
 
-# ── Floating IP (dashboard only) ─────────────────────────────────────────────
+# ── Floating IPs ─────────────────────────────────────────────────────────────
 
 resource "openstack_networking_floatingip_v2" "dashboard" {
   pool = var.external_network_name
