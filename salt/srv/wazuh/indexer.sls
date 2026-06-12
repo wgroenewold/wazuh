@@ -17,14 +17,9 @@ wazuh_indexer:
       - sls: wazuh.certs
 
 wazuh_indexer_dir_perms:
-  file.directory:
-    - name: /etc/wazuh-indexer
-    - user: wazuh-indexer
-    - group: wazuh-indexer
-    - mode: '0750'
-    - recurse:
-      - user
-      - group
+  cmd.run:
+    - name: chown -R wazuh-indexer:wazuh-indexer /etc/wazuh-indexer && chmod 0750 /etc/wazuh-indexer
+    - unless: test "$(stat -c '%U:%G %a' /etc/wazuh-indexer)" = "wazuh-indexer:wazuh-indexer 750"
     - require:
       - pkg: wazuh_indexer
 
@@ -77,7 +72,7 @@ wazuh_indexer_service:
     - require:
       - pkg: wazuh_indexer
       - file: wazuh_indexer_config
-      - file: wazuh_indexer_dir_perms
+      - cmd: wazuh_indexer_dir_perms
     - watch:
       - file: wazuh_indexer_config
 

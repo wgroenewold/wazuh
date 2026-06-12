@@ -135,6 +135,7 @@ resource "openstack_compute_instance_v2" "wazuh" {
     node_ips        = local.node_ips
     internal_domain = var.internal_domain
     repository      = var.repository
+    minion_count    = length(tls_private_key.minion)
     minion_pub_keys = {
       for name, key in tls_private_key.minion :
       "${name}.${var.internal_domain}" => indent(6, key.public_key_pem)

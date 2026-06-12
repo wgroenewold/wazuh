@@ -85,12 +85,11 @@ wazuh_dashboard_service:
       - file: wazuh_dashboard_config
 
 wazuh_dashboard_api_host:
-  file.replace:
-    - name: /usr/share/wazuh-dashboard/data/wazuh/config/wazuh.yml
-    - pattern: 'url: https://localhost'
-    - repl: 'url: https://{{ pillar["wazuh"]["server_ip"] }}'
+  cmd.run:
+    - name: |
+        sed -i 's#url: https://localhost#url: https://{{ pillar["wazuh"]["server_ip"] }}#' /usr/share/wazuh-dashboard/data/wazuh/config/wazuh.yml
+        systemctl restart wazuh-dashboard
     - onlyif: test -f /usr/share/wazuh-dashboard/data/wazuh/config/wazuh.yml
+    - unless: grep -q "url: https://{{ pillar['wazuh']['server_ip'] }}" /usr/share/wazuh-dashboard/data/wazuh/config/wazuh.yml
     - require:
-      - service: wazuh_dashboard_service
-    - watch_in:
       - service: wazuh_dashboard_service

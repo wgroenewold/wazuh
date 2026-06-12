@@ -43,3 +43,12 @@ runcmd:
   - salt-call --local state.apply wazuh.orch.generate_certs_local
   - systemctl enable salt-master salt-minion
   - systemctl restart salt-master salt-minion
+  - |
+      for i in $(seq 1 60); do
+        sleep 10
+        n=$(salt '*' test.ping --out=json 2>/dev/null | grep -c 'true')
+        if [ "$n" -ge ${minion_count} ]; then
+          break
+        fi
+      done
+    - salt '*' state.highstate
