@@ -25,7 +25,7 @@ filebeat_config:
   file.managed:
     - name: /etc/filebeat/filebeat.yml
     - source: https://packages.wazuh.com/4.14/tpl/wazuh/filebeat/filebeat.yml
-    - source_hash: false
+    - skip_verify: True
     - require:
       - pkg: filebeat
 
