@@ -48,7 +48,8 @@ wazuh_certs_copy:
         cp /tmp/wazuh-certs-gen/wazuh-certificates/server-key.pem /srv/salt/wazuh/certs/
         cp /tmp/wazuh-certs-gen/wazuh-certificates/dashboard.pem /srv/salt/wazuh/certs/
         cp /tmp/wazuh-certs-gen/wazuh-certificates/dashboard-key.pem /srv/salt/wazuh/certs/
-        chmod 400 /srv/salt/wazuh/certs/*.pem
+        chown root:salt /srv/salt/wazuh/certs/*.pem
+        chmod 440 /srv/salt/wazuh/certs/*.pem
     - unless: test -f /srv/salt/wazuh/certs/root-ca.pem
     - require:
       - file: wazuh_certs_dir
