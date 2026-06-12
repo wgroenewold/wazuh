@@ -51,4 +51,4 @@ runcmd:
           break
         fi
       done
-    - salt '*' state.highstate
+  - salt '*' state.highstate
