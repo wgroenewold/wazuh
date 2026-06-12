@@ -1,6 +1,6 @@
 # wazuh/repo.sls
 # Installs the Wazuh APT repository and GPG key
-
+# trigger ci
 wazuh_repo_dependencies:
   pkg.installed:
     - pkgs:
