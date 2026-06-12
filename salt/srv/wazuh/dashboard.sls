@@ -90,6 +90,6 @@ wazuh_dashboard_api_host:
         sed -i 's#url: https://localhost#url: https://{{ pillar["wazuh"]["server_ip"] }}#' /usr/share/wazuh-dashboard/data/wazuh/config/wazuh.yml
         systemctl restart wazuh-dashboard
     - onlyif: test -f /usr/share/wazuh-dashboard/data/wazuh/config/wazuh.yml
-    - unless: grep -q "url: https://{{ pillar['wazuh']['server_ip'] }}" /usr/share/wazuh-dashboard/data/wazuh/config/wazuh.yml
+    - unless: 'grep -q "url: https://{{ pillar["wazuh"]["server_ip"] }}" /usr/share/wazuh-dashboard/data/wazuh/config/wazuh.yml'
     - require:
       - service: wazuh_dashboard_service
