@@ -71,14 +71,6 @@ wazuh_dashboard_root_ca:
     - require:
       - file: wazuh_dashboard_certs_dir
 
-wazuh_dashboard_api_host:
-  file.replace:
-    - name: /usr/share/wazuh-dashboard/data/wazuh/config/wazuh.yml
-    - pattern: 'url: https://localhost'
-    - repl: 'url: https://{{ pillar["wazuh"]["server_ip"] }}'
-    - require:
-      - pkg: wazuh_dashboard
-
 wazuh_dashboard_service:
   service.running:
     - name: wazuh-dashboard
@@ -89,7 +81,16 @@ wazuh_dashboard_service:
       - file: wazuh_dashboard_cert
       - file: wazuh_dashboard_cert_key
       - file: wazuh_dashboard_root_ca
-      - file: wazuh_dashboard_api_host
     - watch:
       - file: wazuh_dashboard_config
-      - file: wazuh_dashboard_api_host
+
+wazuh_dashboard_api_host:
+  file.replace:
+    - name: /usr/share/wazuh-dashboard/data/wazuh/config/wazuh.yml
+    - pattern: 'url: https://localhost'
+    - repl: 'url: https://{{ pillar["wazuh"]["server_ip"] }}'
+    - onlyif: test -f /usr/share/wazuh-dashboard/data/wazuh/config/wazuh.yml
+    - require:
+      - service: wazuh_dashboard_service
+    - watch_in:
+      - service: wazuh_dashboard_service

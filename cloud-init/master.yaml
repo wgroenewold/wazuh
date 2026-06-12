@@ -40,5 +40,6 @@ runcmd:
   - cp -r /tmp/wazuh-repo/salt/srv/* /srv/salt/
   - cp -r /tmp/wazuh-repo/salt/pillar/* /srv/pillar/
   - rm -rf /tmp/wazuh-repo
+  - salt-call --local state.apply wazuh.orch.generate_certs_local
   - systemctl enable salt-master salt-minion
   - systemctl restart salt-master salt-minion

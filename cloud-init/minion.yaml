@@ -27,7 +27,7 @@ write_files:
 
 runcmd:
   - curl -fsSL -o /tmp/bootstrap-salt.sh https://github.com/saltstack/salt-bootstrap/releases/latest/download/bootstrap-salt.sh
-  - sh /tmp/bootstrap-salt.sh stable
+  - sh /tmp/bootstrap-salt.sh -X stable
   - mkdir -p /etc/salt/minion.d
   - |
     cat > /etc/salt/minion.d/wazuh.conf << 'SALTEOF'
