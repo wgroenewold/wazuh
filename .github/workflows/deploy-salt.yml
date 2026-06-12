@@ -4,7 +4,7 @@ name: Deploy Salt states
 on:
   push:
     branches:
-      - main
+      - master
     paths:
       - "salt/**"
 
