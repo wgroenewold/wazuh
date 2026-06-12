@@ -1,0 +1,15 @@
+nodes:
+  # Wazuh indexer nodes
+  indexer:
+    - name: indexer
+      ip: {{ pillar['wazuh']['indexer_ip'] }}
+
+  # Wazuh server nodes
+  server:
+    - name: server
+      ip: {{ pillar['wazuh']['server_ip'] }}
+
+  # Wazuh dashboard nodes
+  dashboard:
+    - name: dashboard
+      ip: {{ pillar['wazuh']['dashboard_ip'] }}
