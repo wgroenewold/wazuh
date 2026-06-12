@@ -37,6 +37,8 @@ wazuh_dashboard_config:
         opensearch_security.cookie.secure: true
         csp.rules:
           - "script-src 'unsafe-eval' 'self' 'unsafe-inline'"
+          - "worker-src 'self' blob:"
+
     - require:
       - pkg: wazuh_dashboard
 
