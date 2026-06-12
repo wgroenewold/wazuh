@@ -1,4 +1,3 @@
-# .github/workflows/deploy-salt.yml
 name: Deploy Salt states
 
 on:
@@ -11,14 +10,22 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Deploy to salt-master
+      - name: Deploy Salt states and run highstate
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SALT_MASTER_IP }}
           username: ubuntu
           key: ${{ secrets.SALT_MASTER_SSH_KEY }}
+          command_timeout: 30m
           script: |
-            cd /tmp && git clone ${{ secrets.REPOSITORY }} wazuh-repo 2>/dev/null || (cd /tmp/wazuh-repo && git pull)
-            cp -r /tmp/wazuh-repo/salt/srv/* /srv/salt/
-            cp -r /tmp/wazuh-repo/salt/pillar/* /srv/pillar/
+            if [ -d /tmp/wazuh-repo ]; then
+              cd /tmp/wazuh-repo && git pull
+            else
+              git clone ${{ secrets.REPOSITORY }} /tmp/wazuh-repo
+            fi
+            sudo cp -r /tmp/wazuh-repo/salt/srv/* /srv/salt/
+            sudo cp -r /tmp/wazuh-repo/salt/pillar/* /srv/pillar/
+            sudo salt-run state.orchestrate wazuh.orch.generate_certs
+            sudo salt '*' state.highstate
