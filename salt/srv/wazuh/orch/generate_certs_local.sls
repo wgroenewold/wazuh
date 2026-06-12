@@ -42,6 +42,8 @@ wazuh_certs_copy:
   cmd.run:
     - name: |
         cp /tmp/wazuh-certs-gen/wazuh-certificates/root-ca.pem /srv/salt/wazuh/certs/
+        cp /tmp/wazuh-certs-gen/wazuh-certificates/admin.pem /srv/salt/wazuh/certs/
+        cp /tmp/wazuh-certs-gen/wazuh-certificates/admin-key.pem /srv/salt/wazuh/certs/
         cp /tmp/wazuh-certs-gen/wazuh-certificates/indexer.pem /srv/salt/wazuh/certs/
         cp /tmp/wazuh-certs-gen/wazuh-certificates/indexer-key.pem /srv/salt/wazuh/certs/
         cp /tmp/wazuh-certs-gen/wazuh-certificates/server.pem /srv/salt/wazuh/certs/

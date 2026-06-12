@@ -16,6 +16,18 @@ wazuh_indexer:
       - sls: wazuh.repo
       - sls: wazuh.certs
 
+wazuh_indexer_dir_perms:
+  file.directory:
+    - name: /etc/wazuh-indexer
+    - user: wazuh-indexer
+    - group: wazuh-indexer
+    - mode: '0750'
+    - recurse:
+      - user
+      - group
+    - require:
+      - pkg: wazuh_indexer
+
 wazuh_indexer_config:
   file.managed:
     - name: /etc/wazuh-indexer/opensearch.yml
@@ -65,6 +77,7 @@ wazuh_indexer_service:
     - require:
       - pkg: wazuh_indexer
       - file: wazuh_indexer_config
+      - file: wazuh_indexer_dir_perms
     - watch:
       - file: wazuh_indexer_config
 

@@ -27,6 +27,24 @@ wazuh_cert_root_ca:
     - require:
       - file: wazuh_certs_dir
 
+{% if node_name == "indexer" %}
+wazuh_cert_admin:
+  file.managed:
+    - name: {{ cert_dir }}/admin.pem
+    - source: salt://wazuh/certs/admin.pem
+    - mode: '0400'
+    - require:
+      - file: wazuh_certs_dir
+
+wazuh_cert_admin_key:
+  file.managed:
+    - name: {{ cert_dir }}/admin-key.pem
+    - source: salt://wazuh/certs/admin-key.pem
+    - mode: '0400'
+    - require:
+      - file: wazuh_certs_dir
+{% endif %}
+
 {% if node_name in cert_dir_map %}
 wazuh_cert_node:
   file.managed:
