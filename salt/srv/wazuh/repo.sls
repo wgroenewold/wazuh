@@ -49,6 +49,6 @@ wazuh_local_repo:
 
 wazuh_local_repo_update:
   cmd.run:
-    - name: apt-get update
+    - name: apt-get update || true
     - onchanges:
       - file: wazuh_local_repo

@@ -26,13 +26,13 @@ wazuh_fetch_tag:
   cmd.run:
     - name: |
         TAG=$(curl -sf https://api.github.com/repos/wazuh/wazuh/releases \
-          | jq -r '[.[] | select(.prerelease == true)] | first | .tag_name')
+          | jq -r '[.[] | select(.prerelease == true) | select(.tag_name | startswith("v5"))] | first | .tag_name')
         if [ -z "$TAG" ] || [ "$TAG" = "null" ]; then
-          echo "ERROR: could not determine latest pre-release tag" >&2
+          echo "ERROR: could not determine latest v5 pre-release tag" >&2
           exit 1
         fi
         echo "$TAG" > /mnt/wazuh-build/current-tag
-        echo "Latest pre-release tag: $TAG"
+        echo "Latest v5 pre-release tag: $TAG"
     - require:
       - pkg: wazuh_build_deps
 
@@ -57,19 +57,19 @@ wazuh_clone:
 
 # ── Build packages ────────────────────────────────────────────────────────────
 
-{% for component in ['wazuh-manager', 'wazuh-indexer', 'wazuh-dashboard', 'wazuh-agent'] %}
-wazuh_build_{{ component | replace('-', '_') }}:
+{% for component in ['manager', 'agent'] %}
+wazuh_build_{{ component }}:
   cmd.run:
     - name: |
         TAG=$(cat /mnt/wazuh-build/current-tag)
         VERSION=${TAG#v}
-        cd {{ src_dir }}/packages/debs/SPECS/{{ component }}
-        bash ../../generate_debian_package.sh \
-          --build-docker \
-          --version "$VERSION" \
-          --revision 1 \
+        bash /mnt/wazuh-build/src/packages/generate_package.sh \
+          --target {{ component }} \
           --architecture amd64 \
-          --output-dir {{ pool_dir }}
+          --revision 1 \
+          --store {{ pool_dir }} \
+          --sources /mnt/wazuh-build/src \
+          --system deb
     - require:
       - cmd: wazuh_clone
     - timeout: 3600
@@ -84,10 +84,8 @@ wazuh_repo_packages:
         dpkg-scanpackages pool/main /dev/null > {{ dists_dir }}/Packages
         gzip -9 -k -f {{ dists_dir }}/Packages
     - require:
-      - cmd: wazuh_build_wazuh_manager
-      - cmd: wazuh_build_wazuh_indexer
-      - cmd: wazuh_build_wazuh_dashboard
-      - cmd: wazuh_build_wazuh_agent
+      - cmd: wazuh_build_manager
+      - cmd: wazuh_build_agent
 
 wazuh_repo_release:
   file.managed:
