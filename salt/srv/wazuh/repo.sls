@@ -43,7 +43,7 @@ wazuh_local_repo:
   file.managed:
     - name: /etc/apt/sources.list.d/wazuh-local.list
     - contents: |
-    deb [trusted=yes] http://build.{{ grains['domain'] }} stable main
+        deb [trusted=yes] http://build.{{ grains['domain'] }} stable main
     - require:
       - pkg: wazuh_repo_dependencies
 
