@@ -33,3 +33,22 @@ wazuh_repo_update:
     - name: apt-get update
     - onchanges:
       - file: wazuh_repo
+
+# ── Local build repository ─────────────────────────────
+# Served by build.wazuh.local — packages built from GitHub pre-release tags.
+# When a package version in this repo is higher than packages.wazuh.com/4.x,
+# apt will automatically prefer this repo.
+
+wazuh_local_repo:
+  file.managed:
+    - name: /etc/apt/sources.list.d/wazuh-local.list
+    - contents: |
+    deb [trusted=yes] http://build.{{ grains['domain'] }} stable main
+    - require:
+      - pkg: wazuh_repo_dependencies
+
+wazuh_local_repo_update:
+  cmd.run:
+    - name: apt-get update
+    - onchanges:
+      - file: wazuh_local_repo

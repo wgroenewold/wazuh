@@ -29,9 +29,21 @@ variable "allowed_cidr" {
 }
 
 variable "flavor_name" {
-  description = "OpenStack flavor for all the nodes"
+  description = "OpenStack flavor for nodes"
   type        = string
   default     = "hpc.v1.vm.8-16-160"
+}
+
+variable "build_flavor_name" {
+  description = "OpenStack flavor for the build node (needs more CPU/RAM)"
+  type        = string
+  default     = "hpc.v1.vm.16-64-20"
+}
+
+variable "build_volume_size" {
+  description = "Size in GB of the persistent volume for build artifacts and apt repo"
+  type        = number
+  default     = 100
 }
 
 variable "image_name" {
@@ -74,6 +86,11 @@ variable "ip_client2" {
 variable "ip_salt_master" {
   type    = string
   default = "10.0.0.10"
+}
+
+variable "ip_build" {
+  type    = string
+  default = "10.0.0.50"
 }
 
 variable "internal_domain" {
