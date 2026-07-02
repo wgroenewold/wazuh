@@ -91,6 +91,7 @@ locals {
     dashboard   = { fixed_ip = var.ip_dashboard, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id, openstack_networking_secgroup_v2.wazuh_external.id] }
     client      = { fixed_ip = var.ip_client, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
     client2     = { fixed_ip = var.ip_client2, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
+    build       = { fixed_ip = var.ip_build, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
     salt-master = { fixed_ip = var.ip_salt_master, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id, openstack_networking_secgroup_v2.wazuh_external.id] }
   }
 
@@ -127,7 +128,7 @@ resource "openstack_networking_port_v2" "wazuh" {
 resource "openstack_compute_instance_v2" "wazuh" {
   for_each  = local.nodes
   name      = each.key
-  flavor_id = data.openstack_compute_flavor_v2.wazuh.id
+  flavor_id = each.key == "build" ? data.openstack_compute_flavor_v2.build.id : data.openstack_compute_flavor_v2.wazuh.id
   image_id  = data.openstack_images_image_v2.wazuh.id
   key_pair  = var.key_pair
 
@@ -140,6 +141,13 @@ resource "openstack_compute_instance_v2" "wazuh" {
       for name, key in tls_private_key.minion :
       "${name}.${var.internal_domain}" => indent(6, key.public_key_pem)
     }
+    }) : each.key == "build" ? templatefile("${path.module}/cloud-init/build.yaml", {
+    master_ip       = var.ip_salt_master
+    node_name       = each.key
+    node_ips        = local.node_ips
+    internal_domain = var.internal_domain
+    minion_priv_key = indent(6, tls_private_key.minion[each.key].private_key_pem)
+    minion_pub_key  = indent(6, tls_private_key.minion[each.key].public_key_pem)
     }) : templatefile("${path.module}/cloud-init/minion.yaml", {
     master_ip       = var.ip_salt_master
     node_name       = each.key
@@ -158,8 +166,22 @@ resource "openstack_compute_instance_v2" "wazuh" {
   }
 }
 
+resource "openstack_blockstorage_volume_v3" "build" {
+  name = "wazuh-build-repo"
+  size = var.build_volume_size
+}
+
+resource "openstack_compute_volume_attach_v2" "build" {
+  instance_id = openstack_compute_instance_v2.wazuh["build"].id
+  volume_id   = openstack_blockstorage_volume_v3.build.id
+}
+
 data "openstack_compute_flavor_v2" "wazuh" {
   name = var.flavor_name
+}
+
+data "openstack_compute_flavor_v2" "build" {
+  name = var.build_flavor_name
 }
 
 data "openstack_images_image_v2" "wazuh" {

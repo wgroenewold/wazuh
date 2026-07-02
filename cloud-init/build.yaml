@@ -1,0 +1,82 @@
+#cloud-config
+
+hostname: ${node_name}
+fqdn: ${node_name}.${internal_domain}
+
+package_update: true
+package_upgrade: false
+
+packages:
+  - curl
+  - git
+  - nginx
+  - dpkg-dev
+  - apt-utils
+  - ca-certificates
+  - gnupg
+
+write_files:
+  - path: /etc/hosts
+    content: |
+      127.0.0.1 localhost
+%{ for name, ip in node_ips ~}
+      ${ip} ${name}.${internal_domain} ${name}
+%{ endfor ~}
+  - path: /etc/salt/pki/minion/minion.pem
+    content: |
+      ${minion_priv_key}
+    permissions: '0400'
+  - path: /etc/salt/pki/minion/minion.pub
+    content: |
+      ${minion_pub_key}
+    permissions: '0644'
+  - path: /etc/salt/minion.d/wazuh.conf
+    content: |
+      master: ${master_ip}
+      id: ${node_name}.${internal_domain}
+  - path: /etc/nginx/sites-available/wazuh-repo
+    content: |
+      server {
+          listen 80;
+          server_name build.${internal_domain} ${node_name}.${internal_domain};
+          root /mnt/wazuh-build/apt;
+          autoindex on;
+          location / {
+              try_files $uri $uri/ =404;
+          }
+      }
+
+runcmd:
+  - mkdir -p /etc/salt/minion.d /etc/salt/pki/minion
+  # Mount het losse volume
+  - |
+    DISK=$(lsblk -dpno NAME,TYPE | awk '$2=="disk" {print $1}' | grep -v sda | grep -v vda | head -1)
+    if [ -n "$DISK" ]; then
+      mkfs.ext4 -F $DISK
+      mkdir -p /mnt/wazuh-build
+      echo "$DISK /mnt/wazuh-build ext4 defaults,nofail 0 2" >> /etc/fstab
+      mount /mnt/wazuh-build
+    fi
+  - mkdir -p /mnt/wazuh-build/apt/pool/main
+  - mkdir -p /mnt/wazuh-build/apt/dists/stable/main/binary-amd64
+  # Install Docker
+  - install -m 0755 -d /etc/apt/keyrings
+  - curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+  - chmod a+r /etc/apt/keyrings/docker.asc
+  - echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu noble stable" > /etc/apt/sources.list.d/docker.list
+  - apt-get update
+  - apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+  - systemctl enable docker
+  - systemctl start docker
+  # Configure nginx
+  - ln -sf /etc/nginx/sites-available/wazuh-repo /etc/nginx/sites-enabled/wazuh-repo
+  - rm -f /etc/nginx/sites-enabled/default
+  - systemctl enable nginx
+  - systemctl restart nginx
+  # Install Salt minion
+  - systemctl mask salt-minion
+  - curl -fsSL -o /tmp/bootstrap-salt.sh https://github.com/saltstack/salt-bootstrap/releases/latest/download/bootstrap-salt.sh
+  - sh /tmp/bootstrap-salt.sh stable
+  - systemctl unmask salt-minion
+  - systemctl enable salt-minion
+  - systemctl restart salt-minion

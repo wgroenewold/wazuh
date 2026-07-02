@@ -17,3 +17,6 @@ base:
   'client*.wazuh.local':
     - wazuh.repo
     - wazuh.agent
+
+  'build.wazuh.local':
+    - wazuh.build
