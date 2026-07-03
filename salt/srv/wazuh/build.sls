@@ -69,6 +69,24 @@ wazuh_clone:
     - require:
       - cmd: wazuh_fetch_tag
 
+# ── Clean up old packages ─────────────────────────────────────────────────────
+
+wazuh_cleanup_old_packages:
+  cmd.run:
+    - name: |
+        TAG=$(cat /mnt/wazuh-build/current-tag)
+        COMMIT=${TAG#v}
+        # Remove any .deb files that don't match the current tag's commit hash
+        find {{ pool_dir }} -name "*.deb" | while read f; do
+          if ! echo "$f" | grep -q "$(git -C {{ src_dir }} rev-parse --short HEAD)"; then
+            echo "Removing old package: $f"
+            rm -f "$f"
+          fi
+        done
+    - unless: grep -q "SKIP" /mnt/wazuh-build/build-status
+    - require:
+      - cmd: wazuh_clone
+
 # ── Build packages ────────────────────────────────────────────────────────────
 
 {% for component in ['manager', 'agent'] %}
