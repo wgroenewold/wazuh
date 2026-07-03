@@ -20,3 +20,4 @@ base:
 
   'build.wazuh.local':
     - wazuh.build
+    - wazuh.build_schedule
