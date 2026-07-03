@@ -59,18 +59,19 @@ runcmd:
     fi
   - mkdir -p /mnt/wazuh-build/apt/pool/main
   - mkdir -p /mnt/wazuh-build/apt/dists/stable/main/binary-amd64
-  # Install Docker
+  # Install Docker and move data dirs to persistent volume
   - install -m 0755 -d /etc/apt/keyrings
   - curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
   - chmod a+r /etc/apt/keyrings/docker.asc
   - echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu noble stable" > /etc/apt/sources.list.d/docker.list
   - apt-get update
   - apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-  - systemctl start docker
-  - systemctl stop docker
+  - systemctl stop docker containerd
   - mv /var/lib/docker /mnt/wazuh-build/docker
+  - mv /var/lib/containerd /mnt/wazuh-build/containerd
   - ln -s /mnt/wazuh-build/docker /var/lib/docker
-  - systemctl start docker
+  - ln -s /mnt/wazuh-build/containerd /var/lib/containerd
+  - systemctl start containerd docker
   # Configure nginx
   - ln -sf /etc/nginx/sites-available/wazuh-repo /etc/nginx/sites-enabled/wazuh-repo
   - rm -f /etc/nginx/sites-enabled/default
