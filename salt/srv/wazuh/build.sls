@@ -8,6 +8,7 @@
 {% set pool_dir  = repo_root + '/pool/main' %}
 {% set dists_dir = repo_root + '/dists/stable/main/binary-amd64' %}
 {% set src_dir   = '/mnt/wazuh-build/src' %}
+{% set next_major = pillar.get('wazuh', {}).get('next_major', '') %}
 
 # ── Prerequisites ─────────────────────────────────────────────────────────────
 
@@ -25,16 +26,19 @@ wazuh_build_deps:
 wazuh_fetch_tag:
   cmd.run:
     - name: |
+        {% if not next_major %}
+        echo "ERROR: wazuh:next_major not set in pillar" >&2
+        exit 1
+        {% endif %}
         TAG=$(curl -sf https://api.github.com/repos/wazuh/wazuh/releases \
-          | jq -r '[.[] | select(.prerelease == true) | select(.tag_name | startswith("v5"))] | first | .tag_name')
+          | jq -r '[.[] | select(.prerelease == true) | select(.tag_name | startswith("v{{ next_major }}"))] | first | .tag_name')
         if [ -z "$TAG" ] || [ "$TAG" = "null" ]; then
-          echo "ERROR: could not determine latest v5 pre-release tag" >&2
+          echo "ERROR: could not determine latest next-major pre-release tag" >&2
           exit 1
         fi
         VERSION=${TAG#v}
-        echo "Latest v5 pre-release tag: $TAG ($VERSION)"
-        # Check if this version is already available on packages.wazuh.com
-        if curl -sf "https://packages.wazuh.com/5.x/apt/pool/main/w/wazuh-manager/wazuh-manager_${VERSION}-1_amd64.deb" \
+        echo "Latest next-major pre-release tag: $TAG ($VERSION)"
+        if curl -sf "https://packages.wazuh.com/{{ next_major }}.x/apt/pool/main/w/wazuh-manager/wazuh-manager_${VERSION}-1_amd64.deb" \
             --head --output /dev/null 2>/dev/null; then
           echo "Version $VERSION already available on packages.wazuh.com — skipping build"
           echo "SKIP" > /mnt/wazuh-build/build-status
