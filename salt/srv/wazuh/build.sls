@@ -31,8 +31,18 @@ wazuh_fetch_tag:
           echo "ERROR: could not determine latest v5 pre-release tag" >&2
           exit 1
         fi
+        VERSION=${TAG#v}
+        echo "Latest v5 pre-release tag: $TAG ($VERSION)"
+        # Check if this version is already available on packages.wazuh.com
+        if curl -sf "https://packages.wazuh.com/5.x/apt/pool/main/w/wazuh-manager/wazuh-manager_${VERSION}-1_amd64.deb" \
+            --head --output /dev/null 2>/dev/null; then
+          echo "Version $VERSION already available on packages.wazuh.com — skipping build"
+          echo "SKIP" > /mnt/wazuh-build/build-status
+        else
+          echo "Version $VERSION not yet on packages.wazuh.com — build needed"
+          echo "BUILD" > /mnt/wazuh-build/build-status
+        fi
         echo "$TAG" > /mnt/wazuh-build/current-tag
-        echo "Latest v5 pre-release tag: $TAG"
     - require:
       - pkg: wazuh_build_deps
 
@@ -70,6 +80,7 @@ wazuh_build_{{ component }}:
           --store {{ pool_dir }} \
           --sources /mnt/wazuh-build/src \
           --system deb
+    - unless: grep -q "SKIP" /mnt/wazuh-build/build-status
     - require:
       - cmd: wazuh_clone
     - timeout: 3600
