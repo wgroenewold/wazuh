@@ -31,7 +31,7 @@ wazuh_fetch_tag:
         exit 1
         {% endif %}
         TAG=$(curl -sf https://api.github.com/repos/wazuh/wazuh/releases \
-          | jq -r '[.[] | select(.prerelease == true) | select(.tag_name | startswith("v{{ next_major }}"))] | first | .tag_name')
+          | jq -r '[.[] | select(.prerelease == true) | select(.tag_name | startswith("v{{ next_major }}") and ({{ next_major | tojson }} != ""))] | first | .tag_name')
         if [ -z "$TAG" ] || [ "$TAG" = "null" ]; then
           echo "ERROR: could not determine latest next-major pre-release tag" >&2
           exit 1
@@ -98,7 +98,7 @@ wazuh_repo_packages:
         cd {{ repo_root }}
         dpkg-scanpackages pool/main /dev/null > {{ dists_dir }}/Packages
         gzip -9 -k -f {{ dists_dir }}/Packages
-    - require:
+    - onchanges:
       - cmd: wazuh_build_manager
       - cmd: wazuh_build_agent
 
