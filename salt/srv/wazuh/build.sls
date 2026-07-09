@@ -110,16 +110,27 @@ wazuh_build_{{ component }}:
 {% endfor %}
 
 # ── Build Engine tarball (needed by indexer builder) ─────────────────────────
+wazuh_engine_venv:
+  cmd.run:
+    - name: |
+        python3 -m venv /mnt/wazuh-build/engine-venv
+        /mnt/wazuh-build/engine-venv/bin/pip install --upgrade pip
+    - unless: test -f /mnt/wazuh-build/engine-venv/bin/pip
+    - require:
+      - cmd: wazuh_clone
 
 wazuh_build_engine:
   cmd.run:
     - name: |
         mkdir -p {{ pool_dir }}/engine
+        source /mnt/wazuh-build/engine-venv/bin/activate
         bash {{ src_dir }}/src/engine/standalone/generate_package.sh \
           --architecture amd64 \
-          --store {{ pool_dir }}/engine
+          --store {{ pool_dir }}/engine \
+          --dont-build-docker
     - unless: grep -q "SKIP" /mnt/wazuh-build/build-status
     - require:
+      - cmd: wazuh_engine_venv
       - cmd: wazuh_cleanup_old_packages
     - timeout: 3600
 
