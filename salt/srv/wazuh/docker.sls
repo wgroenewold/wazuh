@@ -64,18 +64,68 @@ wazuh_docker_dirs:
 
 # ── Certs ─────────────────────────────────────────────────────────────────────
 
-wazuh_docker_certs:
-  cmd.run:
-    - name: |
-        cp /srv/salt/wazuh/certs/root-ca.pem {{ wazuh_dir }}/config/root-ca/certs/
-        cp /srv/salt/wazuh/certs/server.pem {{ wazuh_dir }}/config/wazuh_manager/certs/wazuh.manager.pem
-        cp /srv/salt/wazuh/certs/server-key.pem {{ wazuh_dir }}/config/wazuh_manager/certs/wazuh.manager-key.pem
-        cp /srv/salt/wazuh/certs/indexer.pem {{ wazuh_dir }}/config/wazuh_indexer/certs/wazuh.indexer.pem
-        cp /srv/salt/wazuh/certs/indexer-key.pem {{ wazuh_dir }}/config/wazuh_indexer/certs/wazuh.indexer-key.pem
-        cp /srv/salt/wazuh/certs/admin.pem {{ wazuh_dir }}/config/wazuh_indexer/certs/admin.pem
-        cp /srv/salt/wazuh/certs/admin-key.pem {{ wazuh_dir }}/config/wazuh_indexer/certs/admin-key.pem
-        cp /srv/salt/wazuh/certs/dashboard.pem {{ wazuh_dir }}/config/wazuh_dashboard/certs/wazuh.dashboard.pem
-        cp /srv/salt/wazuh/certs/dashboard-key.pem {{ wazuh_dir }}/config/wazuh_dashboard/certs/wazuh.dashboard-key.pem
+# ── Certs ─────────────────────────────────────────────────────────────────────
+
+wazuh_docker_cert_root_ca:
+  file.managed:
+    - name: {{ wazuh_dir }}/config/root-ca/certs/root-ca.pem
+    - source: salt://wazuh/certs/root-ca.pem
+    - require:
+      - file: wazuh_docker_dirs
+
+wazuh_docker_cert_manager:
+  file.managed:
+    - name: {{ wazuh_dir }}/config/wazuh_manager/certs/wazuh.manager.pem
+    - source: salt://wazuh/certs/server.pem
+    - require:
+      - file: wazuh_docker_dirs
+
+wazuh_docker_cert_manager_key:
+  file.managed:
+    - name: {{ wazuh_dir }}/config/wazuh_manager/certs/wazuh.manager-key.pem
+    - source: salt://wazuh/certs/server-key.pem
+    - require:
+      - file: wazuh_docker_dirs
+
+wazuh_docker_cert_indexer:
+  file.managed:
+    - name: {{ wazuh_dir }}/config/wazuh_indexer/certs/wazuh.indexer.pem
+    - source: salt://wazuh/certs/indexer.pem
+    - require:
+      - file: wazuh_docker_dirs
+
+wazuh_docker_cert_indexer_key:
+  file.managed:
+    - name: {{ wazuh_dir }}/config/wazuh_indexer/certs/wazuh.indexer-key.pem
+    - source: salt://wazuh/certs/indexer-key.pem
+    - require:
+      - file: wazuh_docker_dirs
+
+wazuh_docker_cert_admin:
+  file.managed:
+    - name: {{ wazuh_dir }}/config/wazuh_indexer/certs/admin.pem
+    - source: salt://wazuh/certs/admin.pem
+    - require:
+      - file: wazuh_docker_dirs
+
+wazuh_docker_cert_admin_key:
+  file.managed:
+    - name: {{ wazuh_dir }}/config/wazuh_indexer/certs/admin-key.pem
+    - source: salt://wazuh/certs/admin-key.pem
+    - require:
+      - file: wazuh_docker_dirs
+
+wazuh_docker_cert_dashboard:
+  file.managed:
+    - name: {{ wazuh_dir }}/config/wazuh_dashboard/certs/wazuh.dashboard.pem
+    - source: salt://wazuh/certs/dashboard.pem
+    - require:
+      - file: wazuh_docker_dirs
+
+wazuh_docker_cert_dashboard_key:
+  file.managed:
+    - name: {{ wazuh_dir }}/config/wazuh_dashboard/certs/wazuh.dashboard-key.pem
+    - source: salt://wazuh/certs/dashboard-key.pem
     - require:
       - file: wazuh_docker_dirs
 
@@ -231,6 +281,9 @@ wazuh_docker_up:
     - require:
       - service: wazuh_docker_service
       - file: wazuh_docker_compose
-      - cmd: wazuh_docker_certs
+      - file: wazuh_docker_cert_root_ca
+      - file: wazuh_docker_cert_manager
+      - file: wazuh_docker_cert_indexer
+      - file: wazuh_docker_cert_dashboard
       - sysctl: wazuh_docker_sysctl
     - unless: docker ps | grep -q wazuh5-indexer
