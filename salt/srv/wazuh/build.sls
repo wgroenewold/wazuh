@@ -20,6 +20,7 @@ wazuh_build_deps:
       - jq
       - dpkg-dev
       - apt-utils
+      - python3-pip
 
 # ── Fetch latest pre-release tag from GitHub ──────────────────────────────────
 
