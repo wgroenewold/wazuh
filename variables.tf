@@ -58,21 +58,6 @@ variable "key_pair" {
 }
 
 # Static IP
-variable "ip_indexer" {
-  type    = string
-  default = "10.0.0.94"
-}
-
-variable "ip_server" {
-  type    = string
-  default = "10.0.0.200"
-}
-
-variable "ip_dashboard" {
-  type    = string
-  default = "10.0.0.60"
-}
-
 variable "ip_client" {
   type    = string
   default = "10.0.0.78"
