@@ -108,6 +108,67 @@ wazuh_build_{{ component }}:
     - timeout: 3600
 {% endfor %}
 
+# ── Build Engine tarball (needed by indexer builder) ─────────────────────────
+
+wazuh_build_engine:
+  cmd.run:
+    - name: |
+        mkdir -p {{ pool_dir }}/engine
+        bash {{ src_dir }}/src/engine/standalone/generate_package.sh \
+          --architecture amd64 \
+          --store {{ pool_dir }}/engine
+    - unless: grep -q "SKIP" /mnt/wazuh-build/build-status
+    - require:
+      - cmd: wazuh_cleanup_old_packages
+    - timeout: 3600
+
+# ── Clone wazuh-indexer repo ──────────────────────────────────────────────────
+
+wazuh_clone_indexer:
+  cmd.run:
+    - name: |
+        TAG=$(cat /mnt/wazuh-build/current-tag)
+        INDEXER_DIR=/mnt/wazuh-build/src-indexer
+        if [ -d "$INDEXER_DIR/.git" ]; then
+          CURRENT=$(git -C $INDEXER_DIR describe --tags --exact-match 2>/dev/null || echo "none")
+          if [ "$CURRENT" = "$TAG" ]; then
+            echo "Indexer source already at $TAG, skipping clone"
+            exit 0
+          fi
+          rm -rf $INDEXER_DIR
+        fi
+        git clone --depth 1 --branch "$TAG" \
+          https://github.com/wazuh/wazuh-indexer.git $INDEXER_DIR
+    - unless: grep -q "SKIP" /mnt/wazuh-build/build-status
+    - require:
+      - cmd: wazuh_fetch_tag
+    - timeout: 600
+
+# ── Build indexer package ─────────────────────────────────────────────────────
+
+wazuh_build_indexer:
+  cmd.run:
+    - name: |
+        ENGINE_TARBALL=$(ls {{ pool_dir }}/engine/wazuh-engine-*.tar.gz 2>/dev/null | head -1)
+        if [ -z "$ENGINE_TARBALL" ]; then
+          echo "ERROR: engine tarball not found" >&2
+          exit 1
+        fi
+        cd /mnt/wazuh-build/src-indexer/build-scripts
+        bash builder.sh \
+          -d deb \
+          -a x64 \
+          -R 1 \
+          -S true \
+          -e "$ENGINE_TARBALL"
+        find /mnt/wazuh-build/src-indexer/artifacts/dist -name "*.deb" \
+          -exec cp {} {{ pool_dir }}/ \;
+    - unless: grep -q "SKIP" /mnt/wazuh-build/build-status
+    - require:
+      - cmd: wazuh_build_engine
+      - cmd: wazuh_clone_indexer
+    - timeout: 7200
+
 # ── Generate apt repository metadata ──────────────────────────────────────────
 
 wazuh_repo_packages:
@@ -119,6 +180,7 @@ wazuh_repo_packages:
     - onchanges:
       - cmd: wazuh_build_manager
       - cmd: wazuh_build_agent
+      - cmd: wazuh_build_indexer
 
 wazuh_repo_release:
   file.managed:
