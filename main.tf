@@ -86,14 +86,11 @@ resource "openstack_networking_secgroup_rule_v2" "ssh" {
 
 locals {
   nodes = {
-    indexer     = { fixed_ip = var.ip_indexer, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
-    server      = { fixed_ip = var.ip_server, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
-    dashboard   = { fixed_ip = var.ip_dashboard, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id, openstack_networking_secgroup_v2.wazuh_external.id] }
-    client      = { fixed_ip = var.ip_client, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
-    client2     = { fixed_ip = var.ip_client2, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
-    build       = { fixed_ip = var.ip_build, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
+    wazuh5      = { fixed_ip = var.ip_wazuh5,      secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id, openstack_networking_secgroup_v2.wazuh_external.id] }
+    build       = { fixed_ip = var.ip_build,       secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
+    client      = { fixed_ip = var.ip_client,      secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
+    client2     = { fixed_ip = var.ip_client2,     secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
     salt-master = { fixed_ip = var.ip_salt_master, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id, openstack_networking_secgroup_v2.wazuh_external.id] }
-    wazuh5 = { fixed_ip = var.ip_wazuh5, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id, openstack_networking_secgroup_v2.wazuh_external.id] }
   }
 
   # Stripped-down map for use in templatefile() — only strings, no objects
@@ -129,7 +126,7 @@ resource "openstack_networking_port_v2" "wazuh" {
 resource "openstack_compute_instance_v2" "wazuh" {
   for_each  = local.nodes
   name      = each.key
-  flavor_id = each.key == "build" ? data.openstack_compute_flavor_v2.build.id : each.key == "wazuh5" ? data.openstack_compute_flavor_v2.wazuh5.id : data.openstack_compute_flavor_v2.wazuh.id
+  flavor_id = each.key == "build" ? data.openstack_compute_flavor_v2.build.id : data.openstack_compute_flavor_v2.wazuh.id
   image_id  = data.openstack_images_image_v2.wazuh.id
   key_pair  = var.key_pair
 
@@ -142,14 +139,14 @@ resource "openstack_compute_instance_v2" "wazuh" {
       for name, key in tls_private_key.minion :
       "${name}.${var.internal_domain}" => indent(6, key.public_key_pem)
     }
-    }) : each.key == "build" ? templatefile("${path.module}/cloud-init/build.yaml.tftpl", {
+  }) : each.key == "build" ? templatefile("${path.module}/cloud-init/build.yaml.tftpl", {
     master_ip       = var.ip_salt_master
     node_name       = each.key
     node_ips        = local.node_ips
     internal_domain = var.internal_domain
     minion_priv_key = indent(6, tls_private_key.minion[each.key].private_key_pem)
     minion_pub_key  = indent(6, tls_private_key.minion[each.key].public_key_pem)
-    }) : templatefile("${path.module}/cloud-init/minion.yaml.tftpl", {
+  }) : templatefile("${path.module}/cloud-init/minion.yaml.tftpl", {
     master_ip       = var.ip_salt_master
     node_name       = each.key
     node_ips        = local.node_ips
@@ -190,19 +187,15 @@ data "openstack_images_image_v2" "wazuh" {
   most_recent = true
 }
 
-data "openstack_compute_flavor_v2" "wazuh5" {
-  name = var.wazuh5_flavor_name
-}
-
 # ── Floating IPs ─────────────────────────────────────────────────────────────
 
-resource "openstack_networking_floatingip_v2" "dashboard" {
+resource "openstack_networking_floatingip_v2" "wazuh5" {
   pool = var.external_network_name
 }
 
-resource "openstack_networking_floatingip_associate_v2" "dashboard" {
-  floating_ip = openstack_networking_floatingip_v2.dashboard.address
-  port_id     = openstack_networking_port_v2.wazuh["dashboard"].id
+resource "openstack_networking_floatingip_associate_v2" "wazuh5" {
+  floating_ip = openstack_networking_floatingip_v2.wazuh5.address
+  port_id     = openstack_networking_port_v2.wazuh["wazuh5"].id
 }
 
 resource "openstack_networking_floatingip_v2" "salt_master" {
@@ -212,13 +205,4 @@ resource "openstack_networking_floatingip_v2" "salt_master" {
 resource "openstack_networking_floatingip_associate_v2" "salt_master" {
   floating_ip = openstack_networking_floatingip_v2.salt_master.address
   port_id     = openstack_networking_port_v2.wazuh["salt-master"].id
-}
-
-resource "openstack_networking_floatingip_v2" "wazuh5" {
-  pool = var.external_network_name
-}
-
-resource "openstack_networking_floatingip_associate_v2" "wazuh5" {
-  floating_ip = openstack_networking_floatingip_v2.wazuh5.address
-  port_id     = openstack_networking_port_v2.wazuh["wazuh5"].id
 }
