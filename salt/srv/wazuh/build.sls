@@ -21,6 +21,7 @@ wazuh_build_deps:
       - dpkg-dev
       - apt-utils
       - python3-pip
+      - python3-venv
 
 # ── Fetch latest pre-release tag from GitHub ──────────────────────────────────
 
@@ -128,6 +129,7 @@ wazuh_build_engine:
           --architecture amd64 \
           --store {{ pool_dir }}/engine \
           --dont-build-docker
+    - shell: /bin/bash
     - unless: grep -q "SKIP" /mnt/wazuh-build/build-status
     - require:
       - cmd: wazuh_engine_venv
