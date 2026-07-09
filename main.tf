@@ -93,6 +93,7 @@ locals {
     client2     = { fixed_ip = var.ip_client2, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
     build       = { fixed_ip = var.ip_build, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id] }
     salt-master = { fixed_ip = var.ip_salt_master, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id, openstack_networking_secgroup_v2.wazuh_external.id] }
+    wazuh5 = { fixed_ip = var.ip_wazuh5, secgroups = [openstack_networking_secgroup_v2.wazuh_internal.id, openstack_networking_secgroup_v2.wazuh_external.id] }
   }
 
   # Stripped-down map for use in templatefile() — only strings, no objects
@@ -128,7 +129,7 @@ resource "openstack_networking_port_v2" "wazuh" {
 resource "openstack_compute_instance_v2" "wazuh" {
   for_each  = local.nodes
   name      = each.key
-  flavor_id = each.key == "build" ? data.openstack_compute_flavor_v2.build.id : data.openstack_compute_flavor_v2.wazuh.id
+  flavor_id = each.key == "build" ? data.openstack_compute_flavor_v2.build.id : each.key == "wazuh5" ? data.openstack_compute_flavor_v2.wazuh5.id : data.openstack_compute_flavor_v2.wazuh.id
   image_id  = data.openstack_images_image_v2.wazuh.id
   key_pair  = var.key_pair
 
@@ -187,6 +188,10 @@ data "openstack_compute_flavor_v2" "build" {
 data "openstack_images_image_v2" "wazuh" {
   name        = var.image_name
   most_recent = true
+}
+
+data "openstack_compute_flavor_v2" "wazuh5" {
+  name = var.wazuh5_flavor_name
 }
 
 # ── Floating IPs ─────────────────────────────────────────────────────────────

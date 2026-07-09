@@ -104,3 +104,13 @@ variable "repository" {
   type        = string
   default     = "https://github.com/wgroenewold/wazuh.git"
 }
+
+variable "ip_wazuh5" {
+  type    = string
+  default = "10.0.0.51"
+}
+
+variable "wazuh5_flavor_name" {
+  type    = string
+  default = "hpc.v1.vm.8-16-160"
+}
