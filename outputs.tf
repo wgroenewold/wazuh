@@ -1,6 +1,6 @@
-output "dashboard_floating_ip" {
-  description = "Public IP of Wazuh dashboard"
-  value       = openstack_networking_floatingip_v2.dashboard.address
+output "wazuh5_floating_ip" {
+  description = "Public IP of Wazuh 5.0 node"
+  value       = openstack_networking_floatingip_v2.wazuh5.address
 }
 
 output "salt_master_floating_ip" {
@@ -19,8 +19,4 @@ output "internal_ips" {
 output "repository" {
   description = "Git repository URL containing the Salt states"
   value       = var.repository
-}
-
-output "wazuh5_floating_ip" {
-  value = openstack_networking_floatingip_v2.wazuh5.address
 }
