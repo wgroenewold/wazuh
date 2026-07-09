@@ -132,7 +132,7 @@ resource "openstack_compute_instance_v2" "wazuh" {
   image_id  = data.openstack_images_image_v2.wazuh.id
   key_pair  = var.key_pair
 
-  user_data = each.key == "salt-master" ? templatefile("${path.module}/cloud-init/master.yaml", {
+  user_data = each.key == "salt-master" ? templatefile("${path.module}/cloud-init/master.yaml.tftpl", {
     node_ips        = local.node_ips
     internal_domain = var.internal_domain
     repository      = var.repository
@@ -141,14 +141,14 @@ resource "openstack_compute_instance_v2" "wazuh" {
       for name, key in tls_private_key.minion :
       "${name}.${var.internal_domain}" => indent(6, key.public_key_pem)
     }
-    }) : each.key == "build" ? templatefile("${path.module}/cloud-init/build.yaml", {
+    }) : each.key == "build" ? templatefile("${path.module}/cloud-init/build.yaml.tftpl", {
     master_ip       = var.ip_salt_master
     node_name       = each.key
     node_ips        = local.node_ips
     internal_domain = var.internal_domain
     minion_priv_key = indent(6, tls_private_key.minion[each.key].private_key_pem)
     minion_pub_key  = indent(6, tls_private_key.minion[each.key].public_key_pem)
-    }) : templatefile("${path.module}/cloud-init/minion.yaml", {
+    }) : templatefile("${path.module}/cloud-init/minion.yaml.tftpl", {
     master_ip       = var.ip_salt_master
     node_name       = each.key
     node_ips        = local.node_ips
