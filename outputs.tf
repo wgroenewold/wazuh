@@ -20,3 +20,7 @@ output "repository" {
   description = "Git repository URL containing the Salt states"
   value       = var.repository
 }
+
+output "wazuh5_floating_ip" {
+  value = openstack_networking_floatingip_v2.wazuh5.address
+}
