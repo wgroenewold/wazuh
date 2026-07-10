@@ -19,7 +19,6 @@ base:
     - wazuh.agent
 
   'build.wazuh.local':
-    - wazuh.build
     - wazuh.build_schedule
   'wazuh5.wazuh.local':
     - wazuh.docker

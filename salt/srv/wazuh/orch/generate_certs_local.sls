@@ -9,7 +9,7 @@ wazuh_certs_workdir:
 
 wazuh_certs_tool:
   cmd.run:
-    - name: curl -fsSL -o /tmp/wazuh-certs-gen/wazuh-certs-tool.sh https://packages-dev.wazuh.com/5.0/wazuh-certs-tool.sh
+    - name: curl -fsSL -o /tmp/wazuh-certs-gen/wazuh-certs-tool.sh
     - unless: test -f /tmp/wazuh-certs-gen/wazuh-certs-tool.sh
     - require:
       - file: wazuh_certs_workdir
